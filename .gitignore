@@ -22,3 +22,14 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Project
+.env
+data/model/
+data/user-model/
+data/tracker-cards.json
+.mcp.json
+
+# claude
+.claude/*
+CLAUDE.md

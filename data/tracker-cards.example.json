@@ -1,0 +1,211 @@
+[
+  {
+    "id": "PROJ-101",
+    "summary": "Adicionar validação de formulário no cadastro de usuário",
+    "description": "O que será feito? Serão adicionadas validações de campos obrigatórios, formato de e-mail e tamanho mínimo de senha no formulário de cadastro. As mensagens de erro devem ser exibidas inline abaixo de cada campo. Critérios de aceite: campo e-mail deve validar formato RFC 5322, senha mínimo 8 caracteres, campos obrigatórios destacados em vermelho.",
+    "labels": [
+      "front-end",
+      "validação"
+    ],
+    "components": [
+      "Web > Cadastro"
+    ],
+    "type": "Tarefa",
+    "fullText": "Adicionar validação de formulário no cadastro de usuário O que será feito? Serão adicionadas validações de campos obrigatórios, formato de e-mail e tamanho mínimo de senha no formulário de cadastro.",
+    "commentCount": 2,
+    "hoursToResolve": 3.5,
+    "resolvedAt": "2025-07-15T10:00:00.000Z"
+  },
+  {
+    "id": "PROJ-102",
+    "summary": "Corrigir bug de paginação na listagem de produtos",
+    "description": "Qual é o problema? Ao navegar para a página 3 ou superior na listagem de produtos, a página retorna vazia mesmo havendo registros. O problema foi identificado no cálculo do offset da query SQL — o parâmetro page não estava sendo convertido para inteiro antes da multiplicação. Como reproduzir? Acessar /produtos, clicar em próxima página duas vezes. Resultado esperado: exibir os produtos corretamente.",
+    "labels": [
+      "bug",
+      "back-end"
+    ],
+    "components": [
+      "API > Produtos"
+    ],
+    "type": "Bug",
+    "fullText": "Corrigir bug de paginação na listagem de produtos Qual é o problema? Ao navegar para a página 3 ou superior na listagem de produtos, a página retorna vazia mesmo havendo registros.",
+    "commentCount": 0,
+    "hoursToResolve": 1,
+    "resolvedAt": "2025-09-20T14:30:00.000Z"
+  },
+  {
+    "id": "PROJ-103",
+    "summary": "Implementar exportação de relatório em CSV",
+    "description": "O que será feito? Será adicionado um botão de exportação na tela de relatórios que gera um arquivo CSV com os dados filtrados atualmente exibidos. O arquivo deve incluir cabeçalho com os nomes das colunas e respeitar os filtros aplicados pelo usuário. Limite de 10.000 linhas por exportação.",
+    "labels": [
+      "feature",
+      "back-end",
+      "front-end"
+    ],
+    "components": [
+      "Web > Relatórios",
+      "API > Exportação"
+    ],
+    "type": "História",
+    "fullText": "Implementar exportação de relatório em CSV O que será feito? Será adicionado um botão de exportação na tela de relatórios que gera um arquivo CSV com os dados filtrados.",
+    "commentCount": 5,
+    "hoursToResolve": 6,
+    "resolvedAt": "2024-03-10T09:00:00.000Z"
+  },
+  {
+    "id": "PROJ-104",
+    "summary": "Refatorar serviço de autenticação para usar JWT",
+    "description": "O que será feito? O serviço de autenticação atual usa sessões no servidor. Será migrado para JWT com refresh token. Tokens de acesso com expiração de 15 minutos e refresh tokens de 7 dias armazenados em httpOnly cookie. Endpoints afetados: /auth/login, /auth/logout, /auth/refresh.",
+    "labels": [
+      "refactor",
+      "segurança",
+      "back-end"
+    ],
+    "components": [
+      "API > Auth"
+    ],
+    "type": "Tarefa",
+    "fullText": "Refatorar serviço de autenticação para usar JWT O que será feito? O serviço de autenticação atual usa sessões no servidor. Será migrado para JWT com refresh token.",
+    "commentCount": 3,
+    "hoursToResolve": 8,
+    "resolvedAt": "2024-06-05T16:00:00.000Z"
+  },
+  {
+    "id": "PROJ-105",
+    "summary": "Criar componente de upload de arquivos com preview",
+    "description": "O que será feito? Será criado um componente reutilizável de upload que suporta arrastar e soltar (drag-and-drop) e seleção manual. Deve exibir preview para imagens e ícone genérico para outros tipos. Suporta múltiplos arquivos, validação de tamanho máximo (5MB) e tipos permitidos configuráveis via props.",
+    "labels": [
+      "front-end",
+      "componente"
+    ],
+    "components": [
+      "Web > Componentes"
+    ],
+    "type": "Tarefa",
+    "fullText": "Criar componente de upload de arquivos com preview O que será feito? Será criado um componente reutilizável de upload que suporta arrastar e soltar e seleção manual.",
+    "commentCount": 0,
+    "hoursToResolve": 4.5,
+    "resolvedAt": "2025-08-12T11:00:00.000Z"
+  },
+  {
+    "id": "PROJ-106",
+    "summary": "Otimizar query de busca de pedidos por período",
+    "description": "Qual é o problema? A query de busca de pedidos por intervalo de datas está levando mais de 8 segundos para períodos maiores que 30 dias. Análise inicial indica ausência de índice na coluna created_at e uso de função no WHERE que impede uso de índice. Solução: adicionar índice composto (status, created_at) e reescrever o WHERE para não usar função sobre a coluna.",
+    "labels": [
+      "performance",
+      "back-end",
+      "banco-de-dados"
+    ],
+    "components": [
+      "API > Pedidos"
+    ],
+    "type": "Bug",
+    "fullText": "Otimizar query de busca de pedidos por período Qual é o problema? A query de busca de pedidos por intervalo de datas está levando mais de 8 segundos para períodos maiores que 30 dias.",
+    "commentCount": 1,
+    "hoursToResolve": 2,
+    "resolvedAt": "2026-01-18T13:00:00.000Z"
+  },
+  {
+    "id": "PROJ-107",
+    "summary": "Implementar dark mode na aplicação",
+    "description": "O que será feito? Será adicionado suporte a dark mode utilizando CSS custom properties e prefers-color-scheme. Um toggle manual também será disponibilizado no header com persistência da preferência em localStorage. Todos os componentes devem ter variante escura definida no design system.",
+    "labels": [
+      "front-end",
+      "componente"
+    ],
+    "components": [
+      "Web > UI"
+    ],
+    "type": "História",
+    "fullText": "Implementar dark mode na aplicação O que será feito? Será adicionado suporte a dark mode utilizando CSS custom properties e prefers-color-scheme.",
+    "commentCount": 4,
+    "hoursToResolve": 5,
+    "resolvedAt": "2024-09-22T10:30:00.000Z"
+  },
+  {
+    "id": "PROJ-108",
+    "summary": "Adicionar testes unitários ao serviço de notificações",
+    "description": "O que será feito? Serão criados testes unitários cobrindo os principais cenários do serviço de notificações: envio de e-mail, push notification e fallback em caso de falha. Meta de cobertura: 80%. Serão utilizados Jest e mocks para as dependências externas (SMTP, Firebase).",
+    "labels": [
+      "back-end",
+      "validação"
+    ],
+    "components": [
+      "API > Notificações"
+    ],
+    "type": "Tarefa",
+    "fullText": "Adicionar testes unitários ao serviço de notificações O que será feito? Serão criados testes unitários cobrindo os principais cenários do serviço de notificações.",
+    "commentCount": 0,
+    "hoursToResolve": 7,
+    "resolvedAt": "2025-02-14T15:00:00.000Z"
+  },
+  {
+    "id": "PROJ-109",
+    "summary": "Corrigir race condition no carrinho de compras",
+    "description": "Qual é o problema? Quando dois itens são adicionados ao carrinho em rápida sucessão, ocasionalmente apenas um é persistido. A investigação aponta para uma condição de corrida na atualização do estado Redux combinada com chamadas assíncronas sem controle de concorrência. Solução: serializar as operações de atualização do carrinho usando uma fila ou mutex.",
+    "labels": [
+      "bug",
+      "front-end"
+    ],
+    "components": [
+      "Web > Carrinho"
+    ],
+    "type": "Bug",
+    "fullText": "Corrigir race condition no carrinho de compras Qual é o problema? Quando dois itens são adicionados ao carrinho em rápida sucessão, ocasionalmente apenas um é persistido.",
+    "commentCount": 2,
+    "hoursToResolve": 3,
+    "resolvedAt": "2025-10-07T09:30:00.000Z"
+  },
+  {
+    "id": "PROJ-110",
+    "summary": "Criar endpoint de webhook para integração com gateway de pagamento",
+    "description": "O que será feito? Será criado um endpoint POST /webhooks/payment que recebe notificações do gateway de pagamento, valida a assinatura HMAC-SHA256, atualiza o status do pedido e dispara os eventos internos correspondentes (pedido aprovado, recusado, estornado). Logs de todas as requisições devem ser mantidos por 90 dias.",
+    "labels": [
+      "feature",
+      "back-end",
+      "segurança"
+    ],
+    "components": [
+      "API > Pagamentos"
+    ],
+    "type": "Tarefa",
+    "fullText": "Criar endpoint de webhook para integração com gateway de pagamento O que será feito? Será criado um endpoint POST /webhooks/payment que recebe notificações do gateway.",
+    "commentCount": 6,
+    "hoursToResolve": 5.5,
+    "resolvedAt": "2025-11-25T14:00:00.000Z"
+  },
+  {
+    "id": "PROJ-111",
+    "summary": "Migrar banco de dados de MySQL 5.7 para MySQL 8",
+    "description": "O que será feito? Será executada a migração do banco de dados de produção de MySQL 5.7 para MySQL 8.0. Etapas: auditoria de queries incompatíveis, atualização de collations, ajuste de funções descontinuadas, testes de regressão em homologação e execução do upgrade com rollback planejado.",
+    "labels": [
+      "back-end",
+      "banco-de-dados"
+    ],
+    "components": [
+      "Infraestrutura > Banco"
+    ],
+    "type": "Tarefa",
+    "fullText": "Migrar banco de dados de MySQL 5.7 para MySQL 8 O que será feito? Será executada a migração do banco de dados de produção de MySQL 5.7 para MySQL 8.0.",
+    "commentCount": 7,
+    "hoursToResolve": 12,
+    "resolvedAt": "2024-12-03T11:30:00.000Z"
+  },
+  {
+    "id": "PROJ-112",
+    "summary": "Adicionar internacionalização (i18n) ao módulo de relatórios",
+    "description": "O que será feito? O módulo de relatórios receberá suporte a múltiplos idiomas utilizando react-i18next. Serão criados arquivos de tradução para português e inglês. Datas, números e moedas devem ser formatados conforme o locale selecionado. A preferência de idioma deve ser persistida no perfil do usuário.",
+    "labels": [
+      "front-end",
+      "feature"
+    ],
+    "components": [
+      "Web > Relatórios"
+    ],
+    "type": "História",
+    "fullText": "Adicionar internacionalização (i18n) ao módulo de relatórios O que será feito? O módulo de relatórios receberá suporte a múltiplos idiomas utilizando react-i18next.",
+    "commentCount": 3,
+    "hoursToResolve": 9,
+    "resolvedAt": "2025-04-16T10:00:00.000Z"
+  }
+]

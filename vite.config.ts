@@ -15,6 +15,9 @@ export default defineConfig({
     proxy: {
       '/recommend': 'http://localhost:3001',
       '/cards': 'http://localhost:3001',
+      '/train': 'http://localhost:3001',
+      '/labels': 'http://localhost:3001',
+      '/sync-cards': 'http://localhost:3001',
     },
   },
 })

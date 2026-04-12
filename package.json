@@ -1,10 +1,14 @@
 {
-  "name": "jira-recommender",
+  "name": "workload-predictor",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "fetch:cards": "node scripts/fetch-cards.js",
+    "seed": "node scripts/seed.js",
+    "server": "node --watch --watch-path=server server/index.js",
+    "client": "vite",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
