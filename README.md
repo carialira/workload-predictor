@@ -67,6 +67,7 @@ Issue Tracker API → embeddings (USE) → ChromaDB
 | ML | TensorFlow.js + Universal Sentence Encoder |
 | Banco vetorial | ChromaDB (Docker) |
 | Embeddings | `@tensorflow-models/universal-sentence-encoder` (512 dims) |
+| Issue tracker | **Jira** (única integração suportada atualmente) |
 
 ---
 
@@ -151,14 +152,18 @@ npm run dev
 
 Acesse `http://localhost:3000`, clique em **Treinar modelo** e depois em **Priorizar fila**.
 
-### Modo produção (com issue tracker real)
+### Modo produção (com Jira)
+
+> O projeto usa a **Jira REST API v3** e JQL. Outros issue trackers (Linear, GitHub Issues, Azure DevOps) não são suportados — seria necessário criar uma nova implementação do `TrackerService.js`.
+>
+> O sync filtra cards pelo campo customizado `"Ajustado por[Short text]"` — verifique se esse campo existe no seu projeto Jira ou ajuste a JQL em `server/services/TrackerService.js`.
 
 ```bash
 # No .env, configure:
 TRACKER_EMAIL=seu@email.com
-TRACKER_API_TOKEN=seu_token
+TRACKER_API_TOKEN=seu_token          # https://id.atlassian.com/manage-profile/security/api-tokens
 TRACKER_BASE_URL=https://sua-empresa.atlassian.net
-TRACKER_ACCOUNT_ID=seu_account_id
+TRACKER_ACCOUNT_ID=seu_account_id   # visível em: BASE_URL/rest/api/3/myself
 TRACKER_PROJECT_KEY=PROJ
 DEMO_MODE=false
 VITE_DEMO_MODE=false
