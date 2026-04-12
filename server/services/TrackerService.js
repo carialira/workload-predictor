@@ -183,7 +183,6 @@ function loadExampleCards() {
 function demoOpenCards(labels) {
   const cards = loadExampleCards()
   const filtered = labels ? cards.filter((c) => c.labels.includes(labels)) : cards
-  // Remove hoursToResolve para simular cards ainda não resolvidos
   return filtered.map(({ hoursToResolve: _h, ...card }) => ({ commentCount: 0, ...card }))
 }
 
@@ -231,7 +230,6 @@ export async function getLabels(maxResults = 500) {
 
   if (DEMO_MODE) return []
 
-  // Fallback: API do tracker com timeout de 8s
   const urlObj = new URL(`${BASE_URL}/rest/api/3/label?maxResults=${maxResults}`)
   const rawText = await new Promise((resolve, reject) => {
     const req = https.request({

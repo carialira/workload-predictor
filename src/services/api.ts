@@ -64,9 +64,7 @@ export async function* streamSyncCards(clearEmbeddings = false): AsyncGenerator<
       if (line.startsWith('data: ')) {
         try {
           yield JSON.parse(line.slice(6)) as TrainEvent
-        } catch {
-          // skip malformed line
-        }
+        } catch { /* empty */ }
       }
     }
   }
@@ -90,9 +88,7 @@ export async function* streamTrain(): AsyncGenerator<TrainEvent> {
       if (line.startsWith('data: ')) {
         try {
           yield JSON.parse(line.slice(6)) as TrainEvent
-        } catch {
-          // skip malformed line
-        }
+        } catch { /* empty */ }
       }
     }
   }

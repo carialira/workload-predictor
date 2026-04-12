@@ -30,7 +30,6 @@ function denormalize(value, min, max) {
   return value * (max - min) + min
 }
 
-// Forward pass único e determinístico para todos os cards de uma vez.
 async function predictBatch(net, embeddings) {
   const tensor = tf.tensor2d(embeddings)
   const pred = net.predict(tensor)
@@ -47,8 +46,6 @@ router.post('/', async (req, res) => {
     if (mode === 'epic' && !epicKey) return res.status(400).json({ error: 'epicKey é obrigatório para modo epic' })
     if (mode === 'story' && !parentKey) return res.status(400).json({ error: 'parentKey é obrigatório para modo história' })
 
-    // Usa a taxa de aceleração calculada durante o treino.
-    // Se não foi calculada (dados sem datas ou grupos insuficientes), factor = 1 (sem ajuste).
     const accelerationFactor = cache.stats?.accelerationRate ?? 1
 
     const net = await loadModel()
@@ -63,7 +60,6 @@ router.post('/', async (req, res) => {
 
     const embeddings = await embedTexts(openCards.map((c) => c.fullText))
 
-    // Dispara inferência batched e todas as queries Chroma em paralelo
     const [normalizedEstimates, nearestResults] = await Promise.all([
       predictBatch(net, embeddings),
       Promise.all(embeddings.map((emb) => queryNearest(emb, 100))),

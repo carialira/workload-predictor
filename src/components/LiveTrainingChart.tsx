@@ -63,23 +63,19 @@ export function LiveTrainingChart({ trainLog, training }: Props) {
         </div>
       ) : (
         <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Loss real do treino">
-          {/* Best-so-far band */}
           <rect x={PAD.left} y={bestY} width={CW} height={PAD.top + CH - bestY}
             fill="#22c55e" fillOpacity={0.06} />
 
-          {/* Grid lines */}
           {yTicks.map(({ y }, i) => (
             <line key={i} x1={PAD.left} x2={PAD.left + CW} y1={y} y2={y}
               stroke="currentColor" strokeOpacity={0.07} strokeWidth={1} />
           ))}
 
-          {/* Axes */}
           <line x1={PAD.left} x2={PAD.left} y1={PAD.top} y2={PAD.top + CH}
             stroke="currentColor" strokeOpacity={0.25} strokeWidth={1.5} />
           <line x1={PAD.left} x2={PAD.left + CW} y1={PAD.top + CH} y2={PAD.top + CH}
             stroke="currentColor" strokeOpacity={0.25} strokeWidth={1.5} />
 
-          {/* Y-axis labels */}
           {yTicks.map(({ label, y }, i) => (
             <text key={i} x={PAD.left - 6} y={y + 4}
               textAnchor="end" fontSize={11} fill="currentColor" fillOpacity={0.45}>
@@ -87,35 +83,29 @@ export function LiveTrainingChart({ trainLog, training }: Props) {
             </text>
           ))}
 
-          {/* X-axis labels */}
           <text x={PAD.left} y={PAD.top + CH + 14} textAnchor="middle" fontSize={11}
             fill="currentColor" fillOpacity={0.45}>0</text>
           <text x={PAD.left + CW} y={PAD.top + CH + 14} textAnchor="middle" fontSize={11}
             fill="currentColor" fillOpacity={0.45}>{total}</text>
 
-          {/* Axis title */}
           <text x={PAD.left + CW / 2} y={H - 2} textAnchor="middle" fontSize={12}
             fill="currentColor" fillOpacity={0.45}>Épocas</text>
           <text x={13} y={PAD.top + CH / 2} textAnchor="middle" fontSize={12}
             fill="currentColor" fillOpacity={0.45}
             transform={`rotate(-90, 13, ${PAD.top + CH / 2})`}>Loss</text>
 
-          {/* Best-so-far line */}
           <line x1={PAD.left} x2={PAD.left + CW} y1={bestY} y2={bestY}
             stroke="#22c55e" strokeWidth={1.5} strokeDasharray="5 3" />
 
-          {/* Loss curve */}
           {pathD && (
             <path d={pathD} fill="none" stroke="#3b82f6" strokeWidth={2.5}
               strokeLinejoin="round" strokeLinecap="round" />
           )}
 
-          {/* Current point dot */}
           {lastPoint && (
             <circle cx={toX(lastPoint.epoch)} cy={toY(lastPoint.loss)} r={4} fill="#3b82f6" />
           )}
 
-          {/* Live readout */}
           {lastPoint && (
             <>
               <text x={PAD.left + CW - 2} y={PAD.top + 12} textAnchor="end"
@@ -131,7 +121,6 @@ export function LiveTrainingChart({ trainLog, training }: Props) {
         </svg>
       )}
 
-      {/* Legend */}
       <div className="flex gap-4 text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5">
           <span className="inline-block w-5 h-0.5 bg-blue-500 rounded" />

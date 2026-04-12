@@ -117,7 +117,6 @@ function App() {
           </div>
 
           <div className="space-y-4 overflow-y-auto">
-            {/* <TrainingCurveChart /> */}
             <PrioritizationChart cards={cards} hoursAvailableToday={hoursAvailableToday} />
             <LiveTrainingChart trainLog={trainLog} training={training} />
           </div>

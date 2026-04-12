@@ -51,7 +51,6 @@ export function PrioritizationChart({ cards, hoursAvailableToday = 8 }: Props) {
       </div>
 
       <svg viewBox={`0 0 ${W} ${totalH}`} className="w-full" aria-label="Distribuição de tempo dos cards">
-        {/* Background track for bars */}
         {visibleCards.map((card, i) => {
           const y = PAD.top + i * (BAR_H + BAR_GAP)
           return (
@@ -68,7 +67,6 @@ export function PrioritizationChart({ cards, hoursAvailableToday = 8 }: Props) {
           )
         })}
 
-        {/* Bars */}
         {visibleCards.map((card, i) => {
           const y = PAD.top + i * (BAR_H + BAR_GAP)
           const bw = toBarW(card.estimatedHours)
@@ -111,7 +109,6 @@ export function PrioritizationChart({ cards, hoursAvailableToday = 8 }: Props) {
           )
         })}
 
-        {/* Cutoff line */}
         {hoursAvailableToday > 0 && cutoffCapped < W - PAD.right && (
           <g>
             <line
@@ -125,14 +122,12 @@ export function PrioritizationChart({ cards, hoursAvailableToday = 8 }: Props) {
           </g>
         )}
 
-        {/* X axis */}
         <line
           x1={PAD.left + LABEL_W + 8} x2={W - PAD.right}
           y1={totalH - PAD.bottom} y2={totalH - PAD.bottom}
           stroke="currentColor" strokeOpacity={0.15} strokeWidth={1}
         />
 
-        {/* X ticks */}
         {[0, 0.25, 0.5, 0.75, 1].map((v) => {
           const x = PAD.left + LABEL_W + 8 + v * barAreaW
           const label = (maxHours * v).toFixed(v === 0 ? 0 : 1)

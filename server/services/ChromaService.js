@@ -12,9 +12,7 @@ export async function getCollection() {
 export async function deleteCollection() {
   try {
     await client.deleteCollection({ name: COLLECTION_NAME })
-  } catch {
-    // coleção pode não existir ainda — ignorar
-  }
+  } catch { }
 }
 
 export async function upsertCards(cards, embeddings) {

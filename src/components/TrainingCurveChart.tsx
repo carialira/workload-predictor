@@ -42,12 +42,10 @@ export function TrainingCurveChart() {
       </div>
 
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Curva de aprendizado">
-        {/* Zone backgrounds */}
         {zones.map((z) => (
           <rect key={z.label} x={z.x} y={PAD.top} width={z.w} height={CH} className={z.color} />
         ))}
 
-        {/* Zone labels */}
         {zones.map((z) => (
           <text key={z.label} x={z.x + z.w / 2} y={PAD.top + CH - 8}
             textAnchor="middle" fontSize={13} fill="currentColor" fillOpacity={0.4}>
@@ -55,7 +53,6 @@ export function TrainingCurveChart() {
           </text>
         ))}
 
-        {/* Grid lines */}
         {[0, 0.5, 1].map((v) => {
           const y = PAD.top + (1 - v) * CH
           return (
@@ -64,39 +61,32 @@ export function TrainingCurveChart() {
           )
         })}
 
-        {/* Axes */}
         <line x1={PAD.left} x2={PAD.left} y1={PAD.top} y2={PAD.top + CH}
           stroke="currentColor" strokeOpacity={0.3} strokeWidth={1.5} />
         <line x1={PAD.left} x2={PAD.left + CW} y1={PAD.top + CH} y2={PAD.top + CH}
           stroke="currentColor" strokeOpacity={0.3} strokeWidth={1.5} />
 
-        {/* Y-axis labels */}
         <text x={PAD.left - 6} y={PAD.top + 5} textAnchor="end" fontSize={13}
           fill="currentColor" fillOpacity={0.4}>alto</text>
         <text x={PAD.left - 6} y={PAD.top + CH} textAnchor="end" fontSize={13}
           fill="currentColor" fillOpacity={0.4}>baixo</text>
 
-        {/* Axis titles */}
         <text x={PAD.left + CW / 2} y={H - 4} textAnchor="middle" fontSize={14}
           fill="currentColor" fillOpacity={0.5}>Épocas →</text>
         <text x={13} y={PAD.top + CH / 2} textAnchor="middle" fontSize={14}
           fill="currentColor" fillOpacity={0.5}
           transform={`rotate(-90, 13, ${PAD.top + CH / 2})`}>Loss</text>
 
-        {/* Training loss curve */}
         <path d={makePath(trainLoss)} fill="none" stroke="#3b82f6" strokeWidth={3}
           strokeLinejoin="round" strokeLinecap="round" />
 
-        {/* Validation loss curve */}
         <path d={makePath(valLoss)} fill="none" stroke="#f97316" strokeWidth={3}
           strokeLinejoin="round" strokeLinecap="round" strokeDasharray="8 4" />
 
-        {/* Best epoch marker */}
         <line x1={BEST_X} x2={BEST_X} y1={PAD.top} y2={PAD.top + CH}
           stroke="#22c55e" strokeWidth={2} strokeDasharray="5 3" />
         <circle cx={BEST_X} cy={BEST_Y} r={6} fill="#22c55e" />
 
-        {/* Legend */}
         <g transform={`translate(${PAD.left + CW - 118}, ${PAD.top + 6})`}>
           <rect width={118} height={46} rx={4} fill="currentColor" fillOpacity={0.06} />
           <line x1={8} x2={26} y1={15} y2={15} stroke="#3b82f6" strokeWidth={3} />
