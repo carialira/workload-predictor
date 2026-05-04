@@ -4,6 +4,10 @@
 
 A proposta do módulo era replicar um sistema de recomendação com banco vetorial, simulação de produção e rede neural treinada com TensorFlow.js. Decidi aplicar o conceito diretamente no meu dia a dia como desenvolvedor: **priorizar automaticamente a fila de cards do issue tracker com base no meu próprio histórico de resolução.**
 
+<img width="1346" height="643" alt="image" src="https://github.com/user-attachments/assets/b71acd86-c97e-4df7-a106-d7cf93efa4fd" />
+<img width="1386" height="734" alt="image" src="https://github.com/user-attachments/assets/87d5ddeb-1cd5-4d06-aa16-9b36e968d424" />
+
+
 ---
 
 ## Como funciona
