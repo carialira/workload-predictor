@@ -13,7 +13,7 @@ function eventColor(type: string) {
   return ''
 }
 
-export function SyncState({ syncing, syncDone, syncLog }: Props) {
+export function SyncState({ syncDone, syncLog }: Props) {
   return (
     <div className="flex flex-col h-full rounded-lg border border-dashed">
       <div className="flex flex-col items-center text-center gap-3 p-6 shrink-0">

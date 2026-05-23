@@ -44,6 +44,20 @@ export interface RecommendResponse {
   trainedOn: number
 }
 
+export interface ImpactTimelinePoint {
+  month: string
+  avgHours: number
+  cardCount: number
+}
+
+export interface ImpactStats {
+  accelerationRate: number | null
+  totalCards: number
+  aiStartDate: string
+  trainingDate: string
+  timeline: ImpactTimelinePoint[]
+}
+
 export type TrainEventType = 'status' | 'progress' | 'embed_progress' | 'done' | 'error'
 
 export interface TrainEvent {

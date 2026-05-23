@@ -1,0 +1,18 @@
+{
+  "name": "PriorIA",
+  "short_name": "PriorIA",
+  "description": "Priorize sua fila de cards por tempo estimado de resolução — com IA treinada no seu histórico.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f0f1a",
+  "theme_color": "#3b82f6",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

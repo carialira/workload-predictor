@@ -1,0 +1,30 @@
+services:
+  chromadb:
+    image: chromadb/chroma:0.5.23
+    ports:
+      - "8000:8000"
+    volumes:
+      - chromadb_data:/chroma/chroma
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    ports:
+      - "3001:3001"
+    env_file:
+      - .env
+    environment:
+      - CHROMA_URL=http://chromadb:8000
+      - NODE_ENV=production
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      chromadb:
+        condition: service_healthy
+
+volumes:
+  chromadb_data:

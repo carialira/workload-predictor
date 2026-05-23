@@ -31,6 +31,12 @@ function layerUnits(n) {
   return [64, 32, null]
 }
 
+function trainingParams(n) {
+  if (n > 1000) return { maxEpochs: 500, patience: 30 }
+  if (n > 300) return { maxEpochs: 350, patience: 20 }
+  return { maxEpochs: 200, patience: 15 }
+}
+
 function dotProduct(a, b) {
   let sum = 0
   for (let i = 0; i < a.length; i++) sum += a[i] * b[i]
@@ -144,12 +150,14 @@ try {
   fs.mkdirSync(MODEL_PATH, { recursive: true })
   fs.writeFileSync(path.join(MODEL_PATH, 'stats.json'), JSON.stringify({ min, max, accelerationRate }))
 
-  send({ type: 'status', message: `Treinando rede neural com ${filteredPairs.length} cards (100 épocas)...` })
+  const n = filteredPairs.length
+  const { maxEpochs, patience } = trainingParams(n)
+
+  send({ type: 'status', message: `Treinando rede neural com ${n} cards (até ${maxEpochs} épocas, early stopping patience=${patience})...` })
 
   const xTensor = tf.tensor2d(filteredEmbeddings)
   const yTensor = tf.tensor2d(normalizedHours, [normalizedHours.length, 1])
 
-  const n = filteredPairs.length
   const [u1, u2, u3] = layerUnits(n)
 
   const model = tf.sequential()
@@ -160,24 +168,30 @@ try {
   model.add(tf.layers.dense({ units: 1 }))
   model.compile({ optimizer: tf.train.adam(0.001), loss: 'meanSquaredError' })
 
+  let stoppedAtEpoch = maxEpochs
   await model.fit(xTensor, yTensor, {
-    epochs: 100,
+    epochs: maxEpochs,
     batchSize: 32,
     validationSplit: 0.1,
     shuffle: true,
-    callbacks: {
-      onEpochEnd: (epoch, logs) => {
-        if ((epoch + 1) % 10 === 0) {
-          send({
-            type: 'progress',
-            epoch: epoch + 1,
-            total: 100,
-            loss: Number.parseFloat(logs.loss.toFixed(4)),
-          })
-        }
-      },
-    },
+    callbacks: [
+      tf.callbacks.earlyStopping({ monitor: 'val_loss', patience }),
+      new tf.CustomCallback({
+        onEpochEnd: async (epoch, logs) => {
+          stoppedAtEpoch = epoch + 1
+          if ((epoch + 1) % 10 === 0) {
+            send({
+              type: 'progress',
+              epoch: epoch + 1,
+              total: maxEpochs,
+              loss: Number.parseFloat(logs.loss?.toFixed(4) ?? 0),
+            })
+          }
+        },
+      }),
+    ],
   })
+  send({ type: 'status', message: `Treino concluído na época ${stoppedAtEpoch}/${maxEpochs}.` })
 
   const weights = model.getWeights().map((w) => ({
     name: w.name,

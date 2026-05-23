@@ -2,7 +2,8 @@ import 'dotenv/config'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import https from 'node:https'
-import { MIN_HOURS } from '../config/constants.js'
+import { MIN_HOURS, TRACKER_ISSUE_TYPES, TRACKER_EXCLUDED_STATUSES } from '../config/constants.js'
+import { logger } from '../lib/logger.js'
 
 const LOCAL_CARDS_PATH = path.resolve('./data/tracker-cards.json')
 const EXAMPLE_CARDS_PATH = path.resolve('./data/tracker-cards.example.json')
@@ -38,6 +39,7 @@ async function searchIssuePage(jql, nextPageToken) {
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(body),
       },
+      timeout: 15000,
     }, (res) => {
       let data = ''
       res.on('data', chunk => { data += chunk })
@@ -46,6 +48,7 @@ async function searchIssuePage(jql, nextPageToken) {
         else resolve(data)
       })
     })
+    req.on('timeout', () => req.destroy(new Error('Timeout na busca de issues do Jira')))
     req.on('error', reject)
     req.write(body)
     req.end()
@@ -81,6 +84,7 @@ async function fetchResolutionComments(issueKey) {
       path: `${urlObj.pathname}${urlObj.search}`,
       method: 'GET',
       headers: { Authorization: authHeader(), 'Content-Type': 'application/json' },
+      timeout: 10000,
     }, (res) => {
       let data = ''
       res.on('data', chunk => { data += chunk })
@@ -89,6 +93,7 @@ async function fetchResolutionComments(issueKey) {
         else resolve(data)
       })
     })
+    req.on('timeout', () => req.destroy(new Error(`Timeout ao buscar comentários de ${issueKey}`)))
     req.on('error', reject)
     req.end()
   })
@@ -109,6 +114,7 @@ async function fetchMyWorklogHours(issueKey) {
       path: urlObj.pathname,
       method: 'GET',
       headers: { Authorization: authHeader(), 'Content-Type': 'application/json' },
+      timeout: 10000,
     }, (res) => {
       let data = ''
       res.on('data', chunk => { data += chunk })
@@ -117,6 +123,7 @@ async function fetchMyWorklogHours(issueKey) {
         else resolve(data)
       })
     })
+    req.on('timeout', () => req.destroy(new Error(`Timeout ao buscar worklog de ${issueKey}`)))
     req.on('error', reject)
     req.end()
   })
@@ -146,12 +153,13 @@ function processCard(issue) {
 export async function listProjects() {
   const meRes = await fetch(`${BASE_URL}/rest/api/3/myself`, {
     headers: { Authorization: authHeader(), 'Content-Type': 'application/json' },
+    signal: AbortSignal.timeout(10000),
   })
   if (!meRes.ok) throw new Error(`Tracker auth failed: ${meRes.status}`)
 }
 
 export async function fetchAllTrainingCards(onProgress) {
-  console.log('[fetchAllTrainingCards] Verificando acesso ao tracker...')
+  logger.info('[fetchAllTrainingCards] Verificando acesso ao tracker...')
   await listProjects()
   const jql = `project = ${PROJECT_KEY} AND "Ajustado por[Short text]" ~ "${ACCOUNT_ID}" AND status = Done ORDER BY created DESC`
   const data = await searchIssues(jql)
@@ -182,7 +190,8 @@ function loadExampleCards() {
 
 function demoOpenCards(labels) {
   const cards = loadExampleCards()
-  const filtered = labels ? cards.filter((c) => c.labels.includes(labels)) : cards
+  const labelList = labels ? labels.split(',').map((l) => l.trim()).filter(Boolean) : []
+  const filtered = labelList.length === 0 ? cards : cards.filter((c) => labelList.some((l) => c.labels.includes(l)))
   return filtered.map(({ hoursToResolve: _h, ...card }) => ({ commentCount: 0, ...card }))
 }
 
@@ -208,10 +217,10 @@ function buildLabelClause(labels) {
 export async function getOpenCards(epicKey, labels) {
   if (DEMO_MODE) return demoOpenCards(labels)
   const labelClause = buildLabelClause(labels)
-  const jql = `parentEpic = ${epicKey}${labelClause} AND statusCategory = "To Do" ORDER BY created DESC`
-  console.log('[getOpenCards] JQL:', jql)
+  const jql = `("Epic Link" = ${epicKey} OR parentEpic = ${epicKey}) AND issuetype in (${TRACKER_ISSUE_TYPES}) AND status not in (${TRACKER_EXCLUDED_STATUSES})${labelClause} ORDER BY created DESC`
+  logger.debug({ jql }, '[getOpenCards]')
   const data = await searchIssues(jql)
-  console.log('[getOpenCards] issues retornados:', data.issues?.length ?? 0)
+  logger.debug({ count: data.issues?.length ?? 0 }, '[getOpenCards] issues retornados')
   return data.issues.map((issue) => {
     const card = processCard(issue)
     card.commentCount = issue.fields.comment?.total ?? 0
@@ -220,15 +229,12 @@ export async function getOpenCards(epicKey, labels) {
 }
 
 export async function getLabels(maxResults = 500) {
-  const localPath = DEMO_MODE ? EXAMPLE_CARDS_PATH : LOCAL_CARDS_PATH
-  if (fs.existsSync(localPath)) {
-    const cards = JSON.parse(fs.readFileSync(localPath, 'utf8'))
+  if (DEMO_MODE) {
+    if (!fs.existsSync(EXAMPLE_CARDS_PATH)) return []
+    const cards = JSON.parse(fs.readFileSync(EXAMPLE_CARDS_PATH, 'utf8'))
     const all = cards.flatMap((c) => c.labels ?? []).filter(Boolean)
-    const unique = [...new Set(all)].sort((a, b) => a.localeCompare(b))
-    if (unique.length > 0) return unique
+    return [...new Set(all)].sort((a, b) => a.localeCompare(b))
   }
-
-  if (DEMO_MODE) return []
 
   const urlObj = new URL(`${BASE_URL}/rest/api/3/label?maxResults=${maxResults}`)
   const rawText = await new Promise((resolve, reject) => {
@@ -257,10 +263,10 @@ export async function getLabels(maxResults = 500) {
 export async function getOpenCardsByStory(parentKey, labels) {
   if (DEMO_MODE) return demoOpenCards(labels)
   const labelClause = buildLabelClause(labels)
-  const jql = `parent = ${parentKey}${labelClause} AND statusCategory = "To Do" ORDER BY created DESC`
-  console.log('[getOpenCardsByStory] JQL:', jql)
+  const jql = `parent = ${parentKey} AND issuetype in (${TRACKER_ISSUE_TYPES}) AND status not in (${TRACKER_EXCLUDED_STATUSES})${labelClause} ORDER BY created DESC`
+  logger.debug({ jql }, '[getOpenCardsByStory]')
   const data = await searchIssues(jql)
-  console.log('[getOpenCardsByStory] issues retornados:', data.issues?.length ?? 0)
+  logger.debug({ count: data.issues?.length ?? 0 }, '[getOpenCardsByStory] issues retornados')
   return data.issues.map((issue) => {
     const card = processCard(issue)
     card.commentCount = issue.fields.comment?.total ?? 0

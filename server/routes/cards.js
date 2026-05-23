@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { getOpenCards, getOpenCardsByStory } from '../services/TrackerService.js'
+import { logger } from '../lib/logger.js'
 
 const router = Router()
 
@@ -25,7 +26,7 @@ router.get('/', async (req, res) => {
 
     res.status(400).json({ error: 'mode inválido. Use "epic" ou "story"' })
   } catch (err) {
-    console.error(err)
+    logger.error({ err }, 'Erro em GET /cards')
     res.status(500).json({ error: err.message })
   }
 })

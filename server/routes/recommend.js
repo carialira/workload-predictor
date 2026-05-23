@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { z } from 'zod'
 import * as tf from '@tensorflow/tfjs'
 import * as path from 'node:path'
 import * as fs from 'node:fs'
@@ -6,9 +7,19 @@ import { getOpenCards, getOpenCardsByStory } from '../services/TrackerService.js
 import { embedTexts } from '../services/EmbeddingService.js'
 import { queryNearest } from '../services/ChromaService.js'
 import { cache } from '../services/ModelCache.js'
+import { logger } from '../lib/logger.js'
+import { validateBody } from '../middleware/validateBody.js'
 import { MIN_HOURS, MODEL_PATH } from '../config/constants.js'
 
 const router = Router()
+
+const recommendSchema = z.object({
+  mode: z.enum(['epic', 'story']).default('epic'),
+  epicKey: z.string().optional(),
+  parentKey: z.string().optional(),
+  labels: z.string().optional(),
+  hoursAvailableToday: z.number().positive().default(8),
+})
 
 async function loadModel() {
   if (cache.model) return cache.model
@@ -39,9 +50,9 @@ async function predictBatch(net, embeddings) {
   return data
 }
 
-router.post('/', async (req, res) => {
+router.post('/', validateBody(recommendSchema), async (req, res) => {
   try {
-    const { mode = 'epic', epicKey, parentKey, labels, hoursAvailableToday = 8 } = req.body
+    const { mode, epicKey, parentKey, labels, hoursAvailableToday } = req.body
 
     if (mode === 'epic' && !epicKey) return res.status(400).json({ error: 'epicKey é obrigatório para modo epic' })
     if (mode === 'story' && !parentKey) return res.status(400).json({ error: 'parentKey é obrigatório para modo história' })
@@ -93,7 +104,7 @@ router.post('/', async (req, res) => {
 
     res.json({ cards: prioritized, trainedOn: await trainedOn })
   } catch (err) {
-    console.error(err)
+    logger.error({ err }, 'Erro em POST /recommend')
     res.status(500).json({ error: err.message })
   }
 })

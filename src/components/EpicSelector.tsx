@@ -71,10 +71,12 @@ export function EpicSelector({ onSubmit, loading }: EpicSelectorProps) {
     return ` AND labels in (${quoted})`
   }
   const labelClause = buildLabelClause();
+  const issuetypePreview = `issuetype in (Bug, "Defect (sub-task)", Sub-task, Subtarefa)`
+  const statusPreview = `status not in (Canceled, Done)`
   const jqlPreview =
     mode === "epic"
-      ? `parentEpic = ${epicKey || "…"}${labelClause} AND statusCategory = "To Do"`
-      : `parent = ${parentKey || "…"}${labelClause} AND statusCategory = "To Do"`;
+      ? `("Epic Link" = ${epicKey || "…"} OR parentEpic = ${epicKey || "…"}) AND ${issuetypePreview} AND ${statusPreview}${labelClause}`
+      : `parent = ${parentKey || "…"} AND ${issuetypePreview} AND ${statusPreview}${labelClause}`;
 
   const getLoadingContent = () => (
     <div className="h-8 w-full rounded-lg border border-input bg-muted/50 flex items-center px-3 gap-2">

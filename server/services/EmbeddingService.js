@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import * as use from '@tensorflow-models/universal-sentence-encoder'
+import { logger } from '../lib/logger.js'
 export * as tf from '@tensorflow/tfjs'
 
 let modelPromise = null
@@ -7,12 +8,12 @@ let modelPromise = null
 async function loadModel() {
   if (modelPromise) return modelPromise
 
-  console.log('Carregando modelo USE...')
+  logger.info('Carregando modelo USE...')
   modelPromise = use.load({
     modelUrl: 'http://localhost:3001/use-model/model.json',
     vocabUrl: 'http://localhost:3001/use-model/vocab.json',
   }).then((model) => {
-    console.log('Modelo USE carregado.')
+    logger.info('Modelo USE carregado.')
     return model
   })
 
@@ -29,7 +30,7 @@ export async function embedTexts(texts, { batchSize = 10, onProgress } = {}) {
     tensor.dispose()
     results.push(...embeddings)
     const done = Math.min(i + batchSize, texts.length)
-    console.log(`Embeddings: ${done}/${texts.length}`)
+    logger.debug({ done, total: texts.length }, 'Embeddings batch concluído')
     onProgress?.({ done, total: texts.length })
     await new Promise((r) => setImmediate(r))
   }

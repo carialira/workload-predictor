@@ -2,15 +2,17 @@ import { useState } from 'react'
 import { EpicSelector } from '@/components/EpicSelector'
 import { CardQueue } from '@/components/CardQueue'
 import { TrainingPanel } from '@/components/TrainingPanel'
-// import { TrainingCurveChart } from '@/components/TrainingCurveChart'
 import { LiveTrainingChart } from '@/components/LiveTrainingChart'
 import { PrioritizationChart } from '@/components/PrioritizationChart'
+import { ImpactDashboard } from '@/components/ImpactDashboard'
 import { useRecommendations } from '@/hooks/useRecommendations'
+import { useImpactStats } from '@/hooks/useImpactStats'
 import { streamTrain, streamSyncCards } from '@/services/api'
 import type { TrainEvent } from '@/types'
 
 function App() {
   const { cards, trainedOn, loading, error, fetchRecommendations } = useRecommendations()
+  const { data: impactStats } = useImpactStats(trainedOn)
 
   const [hoursAvailableToday, setHoursAvailableToday] = useState(8)
   const [training, setTraining] = useState(false)
@@ -72,7 +74,7 @@ function App() {
     <div className="h-screen flex flex-col overflow-hidden bg-background">
       <div className="max-w-350 mx-auto w-full py-5 px-2 flex flex-col flex-1 min-h-0">
         <div className="mb-3 shrink-0">
-          <h1 className="text-2xl font-semibold tracking-tight mb-1">Issue Queue Prioritizer</h1>
+          <h1 className="text-2xl font-semibold tracking-tight mb-1">PriorIA</h1>
           <p className="text-sm text-muted-foreground">
             IA prioriza seus cards por tempo estimado de resolução, com base no seu histórico.
           </p>
@@ -117,6 +119,7 @@ function App() {
           </div>
 
           <div className="space-y-4 overflow-y-auto">
+            {impactStats && <ImpactDashboard stats={impactStats} />}
             <PrioritizationChart cards={cards} hoursAvailableToday={hoursAvailableToday} />
             <LiveTrainingChart trainLog={trainLog} training={training} />
           </div>

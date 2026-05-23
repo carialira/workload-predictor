@@ -1,9 +1,39 @@
-# Issue Queue Prioritizer
+# PriorIA
 
 > Projeto desenvolvido durante a pós-graduação em **Engenharia de Software com IA Aplicada**, no módulo de Fundamentos de IA e LLMs — com o professor **Erick Wendel**.
 
 A proposta do módulo era replicar um sistema de recomendação com banco vetorial, simulação de produção e rede neural treinada com TensorFlow.js. Decidi aplicar o conceito diretamente no meu dia a dia como desenvolvedor: **priorizar automaticamente a fila de cards do issue tracker com base no meu próprio histórico de resolução.**
 
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white&style=flat-square)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white&style=flat-square)
+![TensorFlow.js](https://img.shields.io/badge/TensorFlow.js-4-FF6F00?logo=tensorflow&logoColor=white&style=flat-square)
+![ChromaDB](https://img.shields.io/badge/ChromaDB-3-orange?style=flat-square)
+![Express](https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=white&style=flat-square)
+![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white&style=flat-square)
+![PWA](https://img.shields.io/badge/PWA-instalável-5A0FC8?logo=pwa&logoColor=white&style=flat-square)
+
+---
+
+![Demo do PriorIA](public/PriorIAgif.gif)
+
+---
+
+## Por que é diferente
+
+A maioria dos ferramentais de planning usa story points ou estimativas manuais. Este projeto aprende **do seu histórico individual** e, mais importante, **mede o impacto que ferramentas de IA tiveram no seu ritmo de trabalho**.
+
+O `accelerationRate` é calculado comparando pares de cards semanticamente similares resolvidos **antes e depois** de uma data de corte que você define (`AI_START_DATE`). Usando similaridade vetorial (dot-product nos embeddings do USE), o sistema encontra tarefas equivalentes nos dois períodos e mede a razão de tempo de resolução. Se você está resolvendo tarefas similares 40% mais rápido após adotar IA, esse fator é aplicado automaticamente às estimativas futuras.
+
+```
+Dado histórico (card resolvido pré-IA)   → embedding → vetor pré
+Dado histórico (card resolvido pós-IA)   → embedding → vetor pós
+                                                   ↓
+                          similaridade(vetor pré, vetor pós) ≥ 0.65?
+                                                   ↓ sim
+                          ratio = horasPos / horasPré  →  accelerationRate
+```
+
+O resultado aparece no **AI Impact Dashboard**: um número em destaque mostrando `−X% mais rápido pós-IA` com gráfico de linha temporal marcando o ponto de virada.
 
 ---
 
@@ -41,126 +71,134 @@ Para cada card **em aberto**, o sistema:
 1. Gera o embedding do texto
 2. Consulta os 100 cards mais similares no ChromaDB (busca vetorial)
 3. Passa o embedding pelo modelo treinado → desnormaliza para horas reais
-4. Ordena todos os cards do menor para o maior tempo estimado
-5. Marca quais cabem no dia (`fitsToday`) com base nas horas disponíveis informadas
-
-```text
-Issue Tracker API → embeddings (USE) → ChromaDB
-                                  ↓
-              card em aberto → predict (TF.js) → tempo estimado → fila priorizada
-```
-
----
-
-## Stack
-
-![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white&style=flat-square)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white&style=flat-square)
-![TensorFlow.js](https://img.shields.io/badge/TensorFlow.js-4-FF6F00?logo=tensorflow&logoColor=white&style=flat-square)
-![ChromaDB](https://img.shields.io/badge/ChromaDB-3-orange?style=flat-square)
-![Express](https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=white&style=flat-square)
-![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white&style=flat-square)
-
-| Camada | Tecnologia |
-| ------ | ---------- |
-| Frontend | React 19 + TypeScript + Tailwind CSS |
-| Backend | Express 5 + Node.js |
-| ML | TensorFlow.js + Universal Sentence Encoder |
-| Banco vetorial | ChromaDB (Docker) |
-| Embeddings | `@tensorflow-models/universal-sentence-encoder` (512 dims) |
-| Issue tracker | **Jira** (única integração suportada atualmente) |
+4. Aplica o `accelerationRate` (fator de aceleração pós-IA medido no treino)
+5. Ordena todos os cards do menor para o maior tempo estimado
+6. Marca quais cabem no dia (`fitsToday`) com base nas horas disponíveis informadas
 
 ---
 
 ## Arquitetura
 
-```text
-Browser (React + TypeScript)
-  ↓ SSE: /sync-cards  SSE: /train  POST: /recommend
-Express (server/)
-  ├── routes/sync-cards  →  Worker Thread (syncWorker)
-  │     └── TrackerService  →  Jira API (batch 10, worklog por card)
-  ├── routes/train       →  Worker Thread (trainWorker)
-  │     ├── EmbeddingService  →  Universal Sentence Encoder
-  │     └── ChromaService     →  ChromaDB (upsert + query)
-  ├── routes/recommend   →  ModelCache (TF.js model em memória)
-  └── config/constants   →  MIN_HOURS, MODEL_PATH, AI_START_DATE...
-ChromaDB (Docker, porta 8000)
+```mermaid
+graph LR
+    Browser["Browser\nReact 19 + TypeScript\n:3000"]
+
+    subgraph Backend ["Express 5 · :3001"]
+        SyncR["/sync-cards"]
+        TrainR["/train"]
+        RecR["/recommend"]
+        StatsR["/stats"]
+        SyncW["syncWorker\nWorker Thread"]
+        TrainW["trainWorker\nWorker Thread"]
+        Cache["ModelCache\nsingleton"]
+    end
+
+    subgraph Dados ["Persistência"]
+        Cards["tracker-cards.json"]
+        Model["data/model/\nmodel.json + stats.json"]
+    end
+
+    Jira["Jira REST API"]
+    ChromaDB["ChromaDB\n:8000"]
+
+    Browser -->|"SSE"| SyncR
+    Browser -->|"SSE"| TrainR
+    Browser -->|"POST"| RecR
+    Browser -->|"GET"| StatsR
+
+    SyncR --> SyncW
+    TrainR --> TrainW
+    RecR --> Cache
+
+    SyncW --> Jira
+    SyncW --> Cards
+
+    TrainW --> Cards
+    TrainW -->|"upsert embeddings"| ChromaDB
+    TrainW --> Model
+
+    Cache --> Model
+    StatsR --> Model
+    StatsR --> Cards
+
+    RecR -->|"query nearest"| ChromaDB
 ```
 
-**Rede neural** — regressão para prever horas de resolução.
-
-A arquitetura se adapta ao tamanho do dataset de treinamento:
+**Rede neural** — regressão para prever horas de resolução. A arquitetura se adapta ao tamanho do dataset:
 
 | Cards | Arquitetura | Regularização |
 | ----- | ----------- | ------------- |
-| < 300 | Dense(512→64, relu) → Dense(64→32, relu) → Dense(1) | — |
-| 300–1000 | Dense(512→128, relu) → Dropout(0.2) → Dense(128→64, relu) → Dense(1) | Dropout 20% |
-| > 1000 | Dense(512→256, relu) → Dropout(0.2) → Dense(256→128, relu) → Dense(128→64, relu) → Dense(1) | Dropout 20% |
+| < 300 | Dense(512→64) → Dense(64→32) → Dense(1) | — |
+| 300–1000 | Dense(512→128) → Dropout(0.2) → Dense(128→64) → Dense(1) | Dropout 20% |
+| > 1000 | Dense(512→256) → Dropout(0.2) → Dense(256→128) → Dense(128→64) → Dense(1) | Dropout 20% |
 
-**Por que essas escolhas?**
+O treinamento usa **early stopping** com patience adaptativo — treinos menores param em até 200 épocas, maiores em até 500. Sem overfitting forçado.
 
-- **`inputShape: [512]`** — fixo, é o tamanho do vetor gerado pelo USE. Não há escolha aqui.
-- **Units por camada** — cada camada reduz pela metade para forçar representações progressivamente mais comprimidas. Para datasets pequenos (~200 cards), redes grandes overfittam facilmente, por isso começa menor.
-- **Dropout** — ativado a partir de 300 cards. Desativa 20% dos neurônios aleatoriamente a cada batch durante o treino, impedindo que a rede memorize exemplos específicos. Funciona como regularização sem aumentar o dataset.
-- **`meanSquaredError`** — padrão para regressão contínua. Penaliza erros grandes mais que pequenos (eleva ao quadrado), o que é desejável: estimar 10h quando são 2h deve ser penalizado mais que estimar 2.5h.
-- **Adam (lr=0.001)** — otimizador adaptativo padrão; converge bem sem ajuste fino de hiperparâmetros.
+---
 
-```text
-Optimizer: Adam (lr=0.001) | Loss: MSE | Epochs: 100 | Batch: 32
-```
+## Stack
 
-O treinamento acontece em um **Worker Thread** dedicado (não bloqueia o event loop do servidor) via SSE com progresso em tempo real no frontend. O modelo é persistido em `data/model/model.json` e carregado em memória no primeiro `/recommend`.
+| Camada | Tecnologia |
+| ------ | ---------- |
+| Frontend | React 19 + TypeScript + Tailwind CSS 4 |
+| Backend | Express 5 + Node.js 20 |
+| ML | TensorFlow.js 4 + Universal Sentence Encoder |
+| Banco vetorial | ChromaDB 3 (Docker) |
+| Embeddings | `@tensorflow-models/universal-sentence-encoder` (512 dims) |
+| Logging | Pino (JSON em produção, pretty em dev) |
+| Validação | Zod |
+| Issue tracker | **Jira** (única integração suportada atualmente) |
 
 ---
 
 ## Rodando o projeto
 
-### Pré-requisitos
-
-- Node.js 20+
-- Docker
-
-### Instalação
+### Opção 1 — Docker Compose (recomendado)
 
 ```bash
-# 1. Suba o ChromaDB
-docker run -p 8000:8000 chromadb/chroma --name meu_chroma
-
-# 2. Clone e instale
-git clone <url>
-cd workload-predictor
-npm install
-
-# 3. Configure o ambiente
+git clone <url> && cd prioria
 cp .env.example .env
-# Edite o .env com suas credenciais do issue tracker
+# Edite .env com suas credenciais ou defina DEMO_MODE=true
+
+docker compose up
 ```
 
-### Modo demonstração (sem issue tracker)
+Acesse `http://localhost:3001`.
 
-Para rodar sem precisar de credenciais do issue tracker, use os dados de exemplo incluídos no repositório:
+### Opção 2 — Desenvolvimento local
+
+**Pré-requisitos:** Node.js 20+, Docker
 
 ```bash
-# No .env, defina:
+# 1. Suba o ChromaDB (versão 0.5.x — necessário para compatibilidade com o client npm)
+docker run -p 8000:8000 chromadb/chroma:0.5.23
+
+# 2. Instale e configure
+npm install
+cp .env.example .env
+
+# 3. Rode
+npm run dev   # frontend :3000 + backend :3001
+```
+
+### Modo demonstração (sem Jira)
+
+```bash
+# No .env:
 DEMO_MODE=true
 VITE_DEMO_MODE=true
-```
 
-```bash
 npm run dev
 ```
 
-Acesse `http://localhost:3000`, clique em **Treinar modelo** e depois em **Priorizar fila**.
+Acesse `http://localhost:3000` → **Treinar modelo** → **Priorizar fila**.
 
 ### Modo produção (com Jira)
 
-> O projeto usa a **Jira REST API v3** e JQL. Outros issue trackers (Linear, GitHub Issues, Azure DevOps) não são suportados — seria necessário criar uma nova implementação do `TrackerService.js`.
->
-> O sync filtra cards pelo campo customizado `"Ajustado por[Short text]"` — verifique se esse campo existe no seu projeto Jira ou ajuste a JQL em `server/services/TrackerService.js`.
+> O projeto usa a **Jira REST API v3** e JQL. O sync filtra cards pelo campo customizado `"Ajustado por[Short text]"` — verifique se esse campo existe no seu projeto ou ajuste a JQL em `server/services/TrackerService.js`.
 
 ```bash
-# No .env, configure:
+# No .env:
 TRACKER_EMAIL=seu@email.com
 TRACKER_API_TOKEN=seu_token          # https://id.atlassian.com/manage-profile/security/api-tokens
 TRACKER_BASE_URL=https://sua-empresa.atlassian.net
@@ -170,11 +208,17 @@ DEMO_MODE=false
 VITE_DEMO_MODE=false
 ```
 
-```bash
-npm run dev
-```
+No app: **Sincronizar** → **Treinar** → **Priorizar fila**.
 
-No app: **Sincronizar dados do tracker** → **Treinar modelo** → **Priorizar fila**.
+---
+
+## Deploy público (Railway)
+
+1. Fork este repositório
+2. Crie um projeto na [Railway](https://railway.app) e adicione um serviço ChromaDB (plugin)
+3. Defina as variáveis de ambiente (ou `DEMO_MODE=true` para demo público)
+4. Railway detecta o `Dockerfile` automaticamente via `railway.json`
+5. Deploy em ~2 minutos
 
 ---
 
@@ -195,53 +239,31 @@ Isso permite que a rede neural generalize por significado: se ela aprendeu que "
 
 ### Separação entre Sincronizar e Treinar
 
-O app separa intencionalmente o ciclo em duas etapas independentes:
-
 **1. Sincronizar dados do tracker** (`/sync-cards`)
 
-- Roda em **Worker Thread** dedicado — o servidor continua respondendo durante a sincronização
+- Roda em **Worker Thread** dedicado
 - Busca no Jira todos os cards resolvidos com worklog registrado, em batches de 10
-- Cards sem worklog recebem o mínimo de **40 minutos** como valor padrão
-- Salva localmente em `data/tracker-cards.json`
-- Não toca no ChromaDB nem no modelo
+- Cards sem worklog recebem o mínimo de **40 minutos**
+- Salva em `data/tracker-cards.json` — não toca no ChromaDB nem no modelo
 
 **2. Treinar modelo** (`/train`)
 
-- Roda em **Worker Thread** dedicado — não bloqueia o event loop com operações TensorFlow.js
-- Lê o `tracker-cards.json` salvo
+- Roda em **Worker Thread** dedicado
 - Verifica no ChromaDB quais cards **já têm embedding** → reutiliza (cache)
-- Gera embeddings (USE) **só para os cards novos** → salva no ChromaDB
-- Remove outliers acima do percentil 95 para evitar distorção no range de normalização
-- Retreina a rede neural do zero com **todos os cards** (embeddings cacheados + novos)
-- Persiste o modelo em `data/model/model.json`
+- Gera embeddings (USE) **só para cards novos** → salva no ChromaDB
+- Calcula `accelerationRate` comparando pares pré/pós-IA semanticamente similares
+- Remove outliers acima do percentil 95
+- Retreina a rede neural do zero com todos os cards + early stopping adaptativo
+- Persiste em `data/model/model.json` + `stats.json`
+
+### Ajuste de estimativa
 
 ```text
-Sincronizar (Worker Thread)
-  →  tracker-cards.json  (ChromaDB intocado)
-                ↓
-Treinar (Worker Thread)
-  →  ChromaDB (upsert, nunca apaga)
-  →  rede neural retreinada com todos os cards
+estimatedHours = max(0.5h, rawHours × accelerationRate + commentPenalty)
+commentPenalty = nComentários × 0.25h
 ```
 
-### Por que retreinar do zero toda vez?
-
-O modelo de regressão precisa ver **todos** os dados históricos para calibrar bem os pesos. Treinar só com dados novos (fine-tuning incremental) causaria esquecimento catastrófico — o modelo perderia o padrão aprendido com os cards antigos. Com 100 épocas o treino completo leva poucos segundos no Worker Thread, sem impacto para outros usuários.
-
-### ChromaDB como cache de embeddings
-
-Gerar um embedding passa o texto pelo USE (Universal Sentence Encoder), que é pesado computacionalmente. Como o texto de um card resolvido não muda, o embedding é calculado uma vez e armazenado no ChromaDB. Na próxima vez que Treinar for acionado, `getExistingEmbeddings` recupera os vetores já calculados e só processa os cards novos.
-
-### Ajuste por penalidade de comentários
-
-Além da predição do modelo, o tempo estimado recebe um ajuste:
-
-```text
-estimatedHours = max(0.5h, rawHours × accelerationFactor + commentPenalty)
-commentPenalty = comentários × 0.25h
-```
-
-Cards com muitos comentários tendem a ser mais complexos ou ter mais bloqueios — cada comentário adiciona 15 minutos à estimativa. O `accelerationFactor` reduz o tempo estimado proporcionalmente ao nível de aceleração por IA configurado (0–80%).
+Cards com muitos comentários tendem a ser mais complexos. O `accelerationRate` reduz o tempo estimado proporcionalmente ao ganho de velocidade medido pós-IA.
 
 ---
 
@@ -250,10 +272,11 @@ Cards com muitos comentários tendem a ser mais complexos ou ter mais bloqueios 
 - Como embeddings de texto capturam semântica e permitem busca por similaridade real (não só palavras-chave)
 - Como o ChromaDB armazena e consulta vetores de alta dimensão de forma eficiente
 - Como treinar e serializar uma rede neural no servidor com TensorFlow.js e reutilizar os pesos em inferência
-- Como SSE (Server-Sent Events) entrega progresso em tempo real sem WebSocket — e por que `setImmediate` é necessário para garantir o flush entre batches
+- Como SSE entrega progresso em tempo real sem WebSocket — e por que `setImmediate` é necessário para garantir o flush entre batches
 - A diferença prática entre busca vetorial (ChromaDB) e predição de regressão (TF.js) — e como combiná-las
-- Por que operações CPU-bound com TensorFlow.js bloqueiam o event loop do Node.js e como Worker Threads resolvem isso para múltiplos usuários simultâneos
-- Como escalar a arquitetura de uma rede neural com base no volume de dados disponível, adicionando capacidade e regularização (Dropout) progressivamente
+- Por que operações CPU-bound com TensorFlow.js bloqueiam o event loop e como Worker Threads resolvem isso
+- Como escalar a arquitetura de uma rede neural com base no volume de dados, adicionando capacidade e regularização progressivamente
+- Como medir o impacto real de ferramentas de IA no ritmo individual de desenvolvimento usando similaridade semântica
 
 ---
 
